@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>VoiceScribe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --g1: #667eea;
+            --g2: #764ba2;
+            --g3: #f093fb;
+            --g4: #f5576c;
+            --g5: #4facfe;
+            --g6: #00f2fe;
+            --bg: #f0f2ff;
+            --white: #ffffff;
+            --text: #1a1a2e;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        /* ===== AUTH ===== */
+        #authScreen { min-height: 100vh; display: flex; flex-direction: column; }
+
+        .auth-hero {
+            background: linear-gradient(135deg, var(--g1), var(--g2), var(--g3));
+            padding: 60px 32px 48px;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -30%;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .hero-icon { font-size: 56px; display: block; margin-bottom: 16px; animation: float 3s ease-in-out infinite; }
+
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        .hero-title { font-size: 32px; font-weight: 800; color: white; letter-spacing: -1px; margin-bottom: 8px; }
+        .hero-sub { color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; }
+
+        .auth-body { padding: 28px 24px; flex: 1; }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--border);
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1; padding: 11px; border-radius: 11px;
+            text-align: center; font-size: 14px; font-weight: 600;
+            color: var(--muted); cursor: pointer; transition: all 0.25s;
+            border: none; background: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .auth-tab.active { background: white; color: var(--g1); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .form-group { margin-bottom: 14px; }
+
+        .form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 7px; display: block; }
+
+        .form-input {
+            width: 100%; background: var(--bg); border: 2px solid var(--border);
+            border-radius: 14px; padding: 14px 16px; font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text);
+            outline: none; transition: border-color 0.2s;
+        }
+
+        .form-input:focus { border-color: var(--g1); background: white; }
+
+        .btn-grad {
+            width: 100%; background: linear-gradient(135deg, var(--g1), var(--g2));
+            color: white; border: none; border-radius: 14px; padding: 16px;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-shadow: 0 4px 20px rgba(102,126,234,0.4);
+            transition: all 0.25s; margin-top: 6px;
+        }
+
+        .btn-grad:active { transform: scale(0.98); }
+        .btn-grad:disabled { opacity: 0.6; }
+
+        .auth-msg {
+            padding: 12px 16px; border-radius: 12px;
+            font-size: 13px; font-weight: 500; margin-top: 14px; display: none;
+        }
+
+        .auth-msg.error { background:#fef2f2; color:var(--error); border:1px solid #fecaca; display:block; }
+        .auth-msg.success { background:#f0fdf4; color:var(--success); border:1px solid #bbf7d0; display:block; }
+
+        /* ===== APP ===== */
+        #appScreen { display: none; }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            padding: 48px 20px 24px;
+            border-radius: 0 0 32px 32px;
+        }
+
+        .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+
+        .app-logo { font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+        .app-logo span { opacity: 0.7; }
+
+        .user-pill {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 12px;
+        }
+
+        .user-avatar { width:28px; height:28px; border-radius:50%; background:white; display:flex; align-items:center; justify-content:center; font-size:14px; }
+        .user-name { font-size:12px; color:white; font-weight:600; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+        .btn-logout-small {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .header-stats { display: flex; gap: 12px; }
+
+        .stat-pill { background:rgba(255,255,255,0.2); border-radius:12px; padding:8px 14px; flex:1; text-align:center; }
+        .stat-num { font-size:18px; font-weight:800; color:white; }
+        .stat-label { font-size:10px; color:rgba(255,255,255,0.8); font-weight:500; }
+
+        .app-body { padding: 20px 16px 40px; }
+
+        /* ===== MIC CARD ===== */
+        .mic-card {
+            background: white; border-radius: 28px;
+            padding: 32px 20px; text-align: center;
+            box-shadow: 0 4px 24px rgba(102,126,234,0.12); margin-bottom: 16px;
+        }
+
+        .mic-outer { position:relative; display:inline-block; margin-bottom:20px; }
+
+        .mic-ring {
+            position:absolute; inset:-8px; border-radius:50%;
+            border:2px solid rgba(102,126,234,0.2);
+        }
+
+        .mic-ring.active { animation: ringPulse 1.2s ease-out infinite; }
+
+        @keyframes ringPulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.6);opacity:0} }
+
+        .mic-btn {
+            width:96px; height:96px; border-radius:50%;
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            border:none; cursor:pointer; font-size:38px;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 8px 32px rgba(102,126,234,0.4);
+            transition: all 0.3s; position:relative; z-index:1;
+        }
+
+        .mic-btn:active { transform: scale(0.95); }
+        .mic-btn.recording { background: linear-gradient(135deg, var(--g4), #c0392b); box-shadow: 0 8px 32px rgba(245,87,108,0.5); }
+
+        .mic-status { font-size:14px; color:var(--muted); font-weight:500; margin-bottom:6px; }
+
+        .mic-timer {
+            font-size:36px; font-weight:800;
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text; letter-spacing:2px;
+        }
+
+        .mic-timer.rec {
+            background: linear-gradient(135deg, var(--g4), #c0392b);
+            -webkit-background-clip:text; background-clip:text;
+        }
+
+        .mic-hint { font-size:12px; color:var(--muted); margin-top:8px; }
+
+        /* ===== UPLOAD ===== */
+        .upload-card {
+            background:white; border-radius:20px; padding:20px;
+            display:flex; align-items:center; gap:16px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:16px;
+            cursor:pointer; transition:transform 0.2s;
+        }
+
+        .upload-card:active { transform: scale(0.98); }
+
+        .upload-icon-wrap {
+            width:52px; height:52px;
+            background: linear-gradient(135deg, var(--g5), var(--g6));
+            border-radius:16px; display:flex; align-items:center;
+            justify-content:center; font-size:24px; flex-shrink:0;
+        }
+
+        .upload-info h3 { font-size:15px; font-weight:700; margin-bottom:3px; }
+        .upload-info p { font-size:12px; color:var(--muted); }
+        .upload-arrow { margin-left:auto; font-size:20px; color:var(--muted); }
+
+        /* ===== LOADER ===== */
+        .loader {
+            display:none; background:white; border-radius:20px;
+            padding:32px; text-align:center; margin-bottom:16px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .loader.active { display:block; animation:fadeUp 0.3s ease; }
+
+        .loader-spinner {
+            width:52px; height:52px; border-radius:50%;
+            background: linear-gradient(135deg, var(--g1), var(--g3));
+            margin:0 auto 16px; animation:spin 0.8s linear infinite; position:relative;
+        }
+
+        .loader-spinner::after { content:''; position:absolute; inset:4px; background:white; border-radius:50%; }
+
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        .loader-text { font-size:14px; font-weight:600; color:var(--g1); }
+        .loader-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+
+        /* ===== RESULT ===== */
+        .result-card {
+            display:none; background:white; border-radius:24px;
+            overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); margin-bottom:16px;
+        }
+
+        .result-card.active { display:block; animation:fadeUp 0.4s ease; }
+
+        .result-top {
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+        }
+
+        .result-title { font-size:15px; font-weight:700; color:white; }
+        .result-badge { background:rgba(255,255,255,0.25); color:white; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; }
+
+        .result-body { padding:20px; }
+
+        .result-text {
+            font-size:15px; line-height:1.75; color:var(--text);
+            background:var(--bg); border-radius:14px; padding:16px;
+            margin-bottom:16px; min-height:80px; white-space:pre-wrap;
+        }
+
+        .quota-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+        .quota-track { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+        .quota-fill { height:100%; background:linear-gradient(90deg, var(--g1), var(--g3)); border-radius:3px; transition:width 0.5s ease; }
+        .quota-text { font-size:12px; color:var(--muted); font-weight:600; white-space:nowrap; }
+
+        /* ===== ACTIONS GRILLE ===== */
+        .actions-section { margin-bottom: 0; }
+
+        .actions-title { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+
+        .actions-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+
+        .btn-act {
+            padding:13px 10px; border-radius:14px; font-size:12px; font-weight:600;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            gap:5px; transition:all 0.2s; font-family:'Plus Jakarta Sans',sans-serif; border:none;
+        }
+
+        .btn-act:active { transform:scale(0.96); }
+
+        .btn-act.outline { background:var(--bg); color:var(--text); border:2px solid var(--border); }
+        .btn-act.outline:hover { border-color:var(--g1); color:var(--g1); }
+
+        .btn-act.grad { background:linear-gradient(135deg, var(--g1), var(--g2)); color:white; box-shadow:0 3px 12px rgba(102,126,234,0.35); }
+        .btn-act.grad2 { background:linear-gradient(135deg, var(--g5), var(--g6)); color:white; box-shadow:0 3px 12px rgba(79,172,254,0.35); }
+        .btn-act.grad3 { background:linear-gradient(135deg, #f093fb, var(--g4)); color:white; box-shadow:0 3px 12px rgba(240,147,251,0.35); }
+        .btn-act.grad4 { background:linear-gradient(135deg, #43e97b, #38f9d7); color:white; box-shadow:0 3px 12px rgba(67,233,123,0.35); }
+        .btn-act.grad5 { background:linear-gradient(135deg, #fa709a, #fee140); color:white; box-shadow:0 3px 12px rgba(250,112,154,0.35); }
+        .btn-act.grad6 { background:linear-gradient(135deg, #a18cd1, #fbc2eb); color:white; box-shadow:0 3px 12px rgba(161,140,209,0.35); }
+
+        .btn-act.premium-locked { opacity: 0.7; position: relative; }
+        .btn-act.premium-locked::after { content:'👑'; position:absolute; top:-4px; right:-4px; font-size:12px; }
+
+        /* ===== PREMIUM MODAL ===== */
+        .modal-overlay {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,0.5); z-index:100;
+            align-items:flex-end; justify-content:center;
+        }
+
+        .modal-overlay.active { display:flex; animation:fadeIn 0.2s ease; }
+
+        .modal {
+            background:white; border-radius:28px 28px 0 0;
+            padding:32px 24px 40px; width:100%; max-width:430px;
+            animation:slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+        .modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 24px; }
+
+        .modal-title { font-size:20px; font-weight:800; margin-bottom:8px; }
+        .modal-sub { font-size:14px; color:var(--muted); margin-bottom:24px; }
+
+        .ai-result {
+            background:var(--bg); border-radius:16px; padding:16px;
+            font-size:14px; line-height:1.7; color:var(--text);
+            margin-bottom:20px; max-height:300px; overflow-y:auto;
+            white-space:pre-wrap;
+        }
+
+        .modal-actions { display:flex; gap:10px; }
+
+        .btn-modal-copy {
+            flex:1; background:var(--bg); border:2px solid var(--border);
+            border-radius:12px; padding:13px; font-size:14px; font-weight:600;
+            cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif;
+        }
+
+        .btn-modal-close {
+            flex:1; background:linear-gradient(135deg, var(--g1), var(--g2));
+            border:none; border-radius:12px; padding:13px; font-size:14px;
+            font-weight:600; color:white; cursor:pointer;
+            font-family:'Plus Jakarta Sans',sans-serif;
+        }
+
+        /* ===== PLANS ===== */
+        .plans-section { margin-bottom: 16px; }
+
+        .plan-card {
+            background:white; border-radius:20px; padding:20px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:10px;
+            border:2px solid transparent; transition:all 0.2s;
+        }
+
+        .plan-card.popular { border-color:var(--g1); }
+
+        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .plan-name { font-size:16px; font-weight:800; }
+        .plan-price { font-size:20px; font-weight:800; color:var(--g1); }
+        .plan-price span { font-size:12px; color:var(--muted); font-weight:500; }
+        .plan-badge { background:linear-gradient(135deg, var(--g1), var(--g2)); color:white; border-radius:8px; padding:3px 8px; font-size:11px; font-weight:700; }
+
+        .plan-features { list-style:none; }
+        .plan-features li { font-size:13px; color:var(--muted); padding:4px 0; display:flex; gap:8px; align-items:center; }
+        .plan-features li::before { content:'✓'; color:var(--success); font-weight:700; }
+
+        /* ===== HISTORY ===== */
+        .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; margin-top:8px; }
+        .section-title { font-size:16px; font-weight:800; color:var(--text); }
+
+        .history-item {
+            background:white; border-radius:16px; padding:14px 16px;
+            margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);
+            cursor:pointer; transition:transform 0.2s; display:flex;
+            gap:12px; align-items:flex-start;
+        }
+
+        .history-item:active { transform:scale(0.98); }
+
+        .history-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg, var(--g1), var(--g3)); margin-top:6px; flex-shrink:0; }
+        .history-content { flex:1; min-width:0; }
+        .history-date { font-size:11px; color:var(--muted); font-weight:500; margin-bottom:4px; }
+        .history-preview { font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+
+        /* ===== UTILS ===== */
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .hidden { display:none !important; }
+
+        .divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
+    </style>
+</head>
+<body>
+
+<!-- ======= AUTH ======= -->
+<div id="authScreen">
+    <div class="auth-hero">
+        <span class="hero-icon">🎙️</span>
+        <div class="hero-title">VoiceScribe</div>
+        <div class="hero-sub">Transcription audio instantanée par IA</div>
+    </div>
+    <div class="auth-body">
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+            <button class="auth-tab" onclick="switchTab('signup')">Inscription</button>
+        </div>
+        <div id="loginForm">
+            <div class="form-group">
+                <label class="form-label">Adresse email</label>
+                <input class="form-input" type="email" id="loginEmail" placeholder="vous@exemple.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input class="form-input" type="password" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="btn-grad" onclick="login()" id="loginBtn">Se connecter →</button>
+        </div>
+        <div id="signupForm" class="hidden">
+            <div class="form-group">
+                <label class="form-label">Adresse email</label>
+                <input class="form-input" type="email" id="signupEmail" placeholder="vous@exemple.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input class="form-input" type="password" id="signupPassword" placeholder="Minimum 6 caractères">
+            </div>
+            <button class="btn-grad" onclick="signup()" id="signupBtn">Créer mon compte →</button>
+        </div>
+        <div class="auth-msg" id="authMsg"></div>
+    </div>
+</div>
+
+<!-- ======= APP ======= -->
+<div id="appScreen">
+    <div class="app-header">
+        <div class="header-top">
+            <div class="app-logo">Voice<span>Scribe</span></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <div class="user-pill">
+                    <div class="user-avatar">👤</div>
+                    <span class="user-name" id="userEmail"></span>
+                </div>
+                <button class="btn-logout-small" onclick="logout()">⏏</button>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="stat-pill">
+                <div class="stat-num" id="statCount">0</div>
+                <div class="stat-label">Transcriptions</div>
+            </div>
+            <div class="stat-pill">
+                <div class="stat-num" id="statMins">0/10</div>
+                <div class="stat-label">Min utilisées</div>
+            </div>
+            <div class="stat-pill">
+                <div class="stat-num" id="statPlan">FREE</div>
+                <div class="stat-label">Mon plan</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-body">
+        <!-- MIC -->
+        <div class="mic-card">
+            <div class="mic-outer">
+                <div class="mic-ring" id="micRing"></div>
+                <button class="mic-btn" id="micBtn" onclick="toggleRecording()">
+                    <span id="micIcon">🎤</span>
+                </button>
+            </div>
+            <div class="mic-status" id="micStatus">Appuyez pour enregistrer</div>
+            <div class="mic-timer" id="timer">00:00</div>
+            <div class="mic-hint">Parlez clairement dans le microphone</div>
+        </div>
+
+        <!-- UPLOAD -->
+        <div class="upload-card" onclick="document.getElementById('audioFile').click()">
+            <div class="upload-icon-wrap">📁</div>
+            <div class="upload-info">
+                <h3>Importer un fichier</h3>
+                <p>MP3, WAV, M4A — max 700 KB</p>
+            </div>
+            <div class="upload-arrow">›</div>
+            <input type="file" id="audioFile" accept="audio/*" class="hidden">
+        </div>
+
+        <!-- LOADER -->
+        <div class="loader" id="loader">
+            <div class="loader-spinner"></div>
+            <div class="loader-text" id="loaderText">Transcription en cours...</div>
+            <div class="loader-sub">Gemini analyse votre audio</div>
+        </div>
+
+        <!-- RESULT -->
+        <div class="result-card" id="resultCard">
+            <div class="result-top">
+                <div class="result-title">📝 Transcription</div>
+                <div class="result-badge" id="wordCount">0 mots</div>
+            </div>
+            <div class="result-body">
+                <div class="result-text" id="resultText"></div>
+                <div class="quota-row">
+                    <div class="quota-track">
+                        <div class="quota-fill" id="quotaFill" style="width:0%"></div>
+                    </div>
+                    <div class="quota-text" id="quotaText">0/10 min</div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- ACTIONS DE BASE -->
+                <div class="actions-section">
+                    <div class="actions-title">Actions</div>
+                    <div class="actions-grid">
+                        <button class="btn-act outline" onclick="copyText()">📋 Copier</button>
+                        <button class="btn-act grad2" onclick="downloadDoc()">💾 Télécharger</button>
+                        <button class="btn-act outline" onclick="newTranscription()">🔄 Nouveau</button>
+                        <button class="btn-act grad" onclick="shareText()">📤 Partager</button>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- FONCTIONS IA PREMIUM -->
+                <div class="actions-section">
+                    <div class="actions-title">✨ Fonctions IA</div>
+                    <div class="actions-grid">
+                        <button class="btn-act grad3" onclick="aiAction('resume')">📝 Résumé</button>
+                        <button class="btn-act grad4" onclick="aiAction('points')">🎯 Points clés</button>
+                        <button class="btn-act grad5" onclick="aiAction('linkedin')">💼 Post LinkedIn</button>
+                        <button class="btn-act grad6" onclick="aiAction('youtube')">🎬 Script YouTube</button>
+                        <button class="btn-act grad" onclick="aiAction('reformuler')">✍️ Reformuler</button>
+                        <button class="btn-act grad2" onclick="showTranslate()">🌐 Traduire</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLANS -->
+        <div class="plans-section" id="plansSection">
+            <div class="section-header">
+                <div class="section-title">💎 Nos Plans</div>
+            </div>
+
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Gratuit</div>
+                    <div class="plan-price">0 FCFA</div>
+                </div>
+                <ul class="plan-features">
+                    <li>10 minutes / mois</li>
+                    <li>Transcription audio</li>
+                    <li>Téléchargement TXT/HTML</li>
+                    <li>Historique 7 jours</li>
+                </ul>
+            </div>
+
+            <div class="plan-card popular">
+                <div class="plan-header">
+                    <div class="plan-name">Pro 🔥</div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <div class="plan-badge">POPULAIRE</div>
+                        <div class="plan-price">3 000 FCFA<span>/mois</span></div>
+                    </div>
+                </div>
+                <ul class="plan-features">
+                    <li>300 minutes / mois</li>
+                    <li>Toutes les fonctions IA</li>
+                    <li>Résumé, Points clés, LinkedIn</li>
+                    <li>Script YouTube</li>
+                    <li>Traduction 10 langues</li>
+                    <li>Historique illimité</li>
+                </ul>
+            </div>
+
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Business</div>
+                    <div class="plan-price">10 000 FCFA<span>/mois</span></div>
+                </div>
+                <ul class="plan-features">
+                    <li>1500 minutes / mois</li>
+                    <li>Tout le plan Pro</li>
+                    <li>Support prioritaire</li>
+                    <li>API access</li>
+                    <li>Multi-utilisateurs</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div id="historySection" class="hidden">
+            <div class="section-header">
+                <div class="section-title">Historique</div>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ======= MODAL RÉSULTAT IA ======= -->
+<div class="modal-overlay" id="aiModal" onclick="closeModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title" id="modalTitle">Résultat</div>
+        <div class="modal-sub" id="modalSub"></div>
+        <div class="ai-result" id="aiResult"></div>
+        <div class="modal-actions">
+            <button class="btn-modal-copy" onclick="copyAiResult()">📋 Copier</button>
+            <button class="btn-modal-close" onclick="closeModalBtn()">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ======= MODAL TRADUCTION ======= -->
+<div class="modal-overlay" id="translateModal" onclick="closeModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🌐 Traduire</div>
+        <div class="modal-sub">Choisissez la langue cible</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+            <button class="btn-act grad" onclick="doTranslate('anglais')">🇬🇧 Anglais</button>
+            <button class="btn-act grad2" onclick="doTranslate('espagnol')">🇪🇸 Espagnol</button>
+            <button class="btn-act grad3" onclick="doTranslate('arabe')">🇸🇦 Arabe</button>
+            <button class="btn-act grad4" onclick="doTranslate('portugais')">🇧🇷 Portugais</button>
+            <button class="btn-act grad5" onclick="doTranslate('allemand')">🇩🇪 Allemand</button>
+            <button class="btn-act grad6" onclick="doTranslate('swahili')">🌍 Swahili</button>
+            <button class="btn-act outline" onclick="doTranslate('haoussa')">🌍 Haoussa</button>
+            <button class="btn-act outline" onclick="doTranslate('wolof')">🌍 Wolof</button>
+        </div>
+        <button class="btn-modal-close" onclick="closeModalBtn2()">Fermer</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://nyyjxlinxgbdjtavnmpz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_jG7gszCRGQ1EamS95F0xcg_mVtlwW8H';
+    const WORKER_URL = 'https://voice.assolemetchaba67.workers.dev';
+    const MAX_FREE_MINS = 10;
+
+    const getToken = () => localStorage.getItem('vs_token');
+    const setToken = t => localStorage.setItem('vs_token', t);
+    const getUser = () => { try { return JSON.parse(localStorage.getItem('vs_user')); } catch { return null; } };
+    const setUser = u => localStorage.setItem('vs_user', JSON.stringify(u));
+    const clearSession = () => { localStorage.removeItem('vs_token'); localStorage.removeItem('vs_user'); };
+
+    const authHeaders = () => ({
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (getToken() || SUPABASE_KEY)
+    });
+
+    // ===== AUTH =====
+    let currentTab = 'login';
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+        document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+        document.querySelectorAll('.auth-tab').forEach((t, i) => {
+            t.classList.toggle('active', (i === 0) === (tab === 'login'));
+        });
+        document.getElementById('authMsg').className = 'auth-msg';
+    }
+
+    function showMsg(msg, type) {
+        const el = document.getElementById('authMsg');
+        el.textContent = msg;
+        el.className = 'auth-msg ' + type;
+    }
+
+    async function login() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value;
+        if (!email || !pass) return showMsg('Veuillez remplir tous les champs', 'error');
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true; btn.textContent = 'Connexion...';
+        const r = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const d = await r.json();
+        btn.disabled = false; btn.textContent = 'Se connecter →';
+        if (d.access_token) { setToken(d.access_token); setUser(d.user); showApp(); }
+        else showMsg(d.error_description || 'Email ou mot de passe incorrect', 'error');
+    }
+
+    async function signup() {
+        const email = document.getElementById('signupEmail').value.trim();
+        const pass = document.getElementById('signupPassword').value;
+        if (!email || !pass) return showMsg('Veuillez remplir tous les champs', 'error');
+        if (pass.length < 6) return showMsg('Mot de passe min 6 caractères', 'error');
+        const btn = document.getElementById('signupBtn');
+        btn.disabled = true; btn.textContent = 'Création...';
+        const r = await fetch(SUPABASE_URL + '/auth/v1/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const d = await r.json();
+        btn.disabled = false; btn.textContent = 'Créer mon compte →';
+        if (d.id || d.user) showMsg('✅ Compte créé ! Vérifiez votre email.', 'success');
+        else showMsg(d.error_description || d.msg || 'Erreur inscription', 'error');
+    }
+
+    async function logout() {
+        await fetch(SUPABASE_URL + '/auth/v1/logout', { method: 'POST', headers: authHeaders() });
+        clearSession();
+        document.getElementById('appScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'flex';
+    }
+
+    function showApp() {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        const u = getUser();
+        if (u) document.getElementById('userEmail').textContent = u.email.split('@')[0];
+        loadHistory();
+        loadQuota();
+    }
+
+    window.addEventListener('load', () => { if (getToken() && getUser()) showApp(); });
+
+    // ===== QUOTA =====
+    let totalMins = 0, totalCount = 0;
+
+    async function loadQuota() {
+        const u = getUser();
+        if (!u) return;
+        try {
+            const r = await fetch(SUPABASE_URL + '/rest/v1/user_quotas?user_id=eq.' + u.id, { headers: authHeaders() });
+            if (r.ok) {
+                const data = await r.json();
+                if (data && data[0]) {
+                    totalMins = data[0].minutes_used || 0;
+                    updateQuotaUI();
+                }
+            }
+        } catch {}
+    }
+
+    async function updateQuotaDB(addMins) {
+        const u = getUser();
+        if (!u) return;
+        totalMins += addMins;
+        updateQuotaUI();
+        try {
+            const check = await fetch(SUPABASE_URL + '/rest/v1/user_quotas?user_id=eq.' + u.id, { headers: authHeaders() });
+            const existing = await check.json();
+            if (existing && existing.length > 0) {
+                await fetch(SUPABASE_URL + '/rest/v1/user_quotas?user_id=eq.' + u.id, {
+                    method: 'PATCH',
+                    headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ minutes_used: totalMins, updated_at: new Date().toISOString() })
+                });
+            } else {
+                await fetch(SUPABASE_URL + '/rest/v1/user_quotas', {
+                    method: 'POST',
+                    headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ user_id: u.id, minutes_used: totalMins, plan: 'free' })
+                });
+            }
+        } catch {}
+    }
+
+    function updateQuotaUI() {
+        document.getElementById('quotaText').textContent = totalMins + '/' + MAX_FREE_MINS + ' min';
+        document.getElementById('quotaFill').style.width = Math.min(totalMins * 10, 100) + '%';
+        document.getElementById('statMins').textContent = totalMins + '/' + MAX_FREE_MINS;
+    }
+
+    // ===== RECORDER =====
+    let isRec = false, recorder, chunks = [], secs = 0, tInterval;
+
+    function toggleRecording() {
+        if (totalMins >= MAX_FREE_MINS) {
+            alert('🚫 Quota gratuit atteint !\n\nPassez au plan Pro pour continuer.');
+            return;
+        }
+        isRec ? stopRec() : startRec();
+    }
+
+    async function startRec() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+            });
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+            recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16000 });
+            chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                if (blob.size > 900 * 1024) {
+                    document.getElementById('loader').classList.remove('active');
+                    document.getElementById('micStatus').textContent = 'Appuyez pour enregistrer';
+                    alert('⚠️ Audio trop long. Max 30 secondes.');
+                    return;
+                }
+                transcribe(blob);
+            };
+            recorder.start();
+            isRec = true;
+            document.getElementById('micBtn').classList.add('recording');
+            document.getElementById('micRing').classList.add('active');
+            document.getElementById('micIcon').textContent = '⏹️';
+            document.getElementById('micStatus').textContent = 'Enregistrement...';
+            document.getElementById('timer').classList.add('rec');
+            secs = 0;
+            tInterval = setInterval(() => { secs++; updateTimer(); }, 1000);
+        } catch { alert('❌ Accès au microphone refusé'); }
+    }
+
+    function stopRec() {
+        if (recorder && recorder.state !== 'inactive') {
+            recorder.stop();
+            recorder.stream.getTracks().forEach(t => t.stop());
+        }
+        isRec = false;
+        clearInterval(tInterval);
+        document.getElementById('micBtn').classList.remove('recording');
+        document.getElementById('micRing').classList.remove('active');
+        document.getElementById('micIcon').textContent = '🎤';
+        document.getElementById('micStatus').textContent = 'Traitement...';
+        document.getElementById('timer').classList.remove('rec');
+    }
+
+    function updateTimer() {
+        document.getElementById('timer').textContent =
+            String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
+    }
+
+    document.getElementById('audioFile').addEventListener('change', e => {
+        if (e.target.files[0]) transcribe(e.target.files[0]);
+    });
+
+    // ===== TRANSCRIPTION =====
+    let currentText = '';
+
+    async function transcribe(audio) {
+        document.getElementById('loader').classList.add('active');
+        document.getElementById('loaderText').textContent = 'Transcription en cours...';
+        document.getElementById('resultCard').classList.remove('active');
+
+        try {
+            const b64 = await new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.onloadend = () => res(reader.result.split(',')[1]);
+                reader.onerror = rej;
+                reader.readAsDataURL(audio);
+            });
+
+            const resp = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getToken()
+                },
+                body: JSON.stringify({
+                    contents: [{ parts: [
+                        { inline_data: { mime_type: audio.type || 'audio/webm', data: b64 } },
+                        { text: "Transcris exactement ce qui est dit dans cet audio. Retourne uniquement la transcription, sans commentaires ni explications." }
+                    ]}]
+                })
+            });
+
+            if (!resp.ok) throw new Error('Erreur serveur ' + resp.status);
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error.message);
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('Aucune transcription reçue');
+
+            currentText = text;
+            document.getElementById('resultText').textContent = text;
+            document.getElementById('wordCount').textContent = text.trim().split(/\s+/).length + ' mots';
+
+            const addMin = Math.ceil(secs / 60) || 1;
+            await updateQuotaDB(addMin);
+            totalCount++;
+            document.getElementById('statCount').textContent = totalCount;
+
+            document.getElementById('loader').classList.remove('active');
+            document.getElementById('resultCard').classList.add('active');
+            document.getElementById('micStatus').textContent = 'Appuyez pour enregistrer';
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+
+            await saveTranscription(text);
+            loadHistory();
+
+        } catch (err) {
+            document.getElementById('loader').classList.remove('active');
+            document.getElementById('micStatus').textContent = 'Appuyez pour enregistrer';
+            alert('❌ ' + err.message);
+        }
+    }
+
+    // ===== FONCTIONS IA =====
+    const aiPrompts = {
+        resume: { title: '📝 Résumé', sub: 'Résumé automatique de votre transcription', prompt: 'Fais un résumé clair et concis de ce texte en 3-5 phrases maximum :\n\n' },
+        points: { title: '🎯 Points clés', sub: 'Les idées principales extraites', prompt: 'Extrais les 5 points clés les plus importants de ce texte. Format : liste numérotée :\n\n' },
+        linkedin: { title: '💼 Post LinkedIn', sub: 'Prêt à publier sur LinkedIn', prompt: 'Transforme ce texte en un post LinkedIn engageant et professionnel. Ajoute des emojis pertinents et des hashtags africains francophones à la fin :\n\n' },
+        youtube: { title: '🎬 Script YouTube', sub: 'Script structuré pour YouTube', prompt: 'Transforme ce texte en un script YouTube structuré avec : intro accrocheuse, développement en 3 parties, conclusion avec call-to-action. Ajoute [PAUSE], [ZOOM], [B-ROLL] aux endroits appropriés :\n\n' },
+        reformuler: { title: '✍️ Reformulation', sub: 'Texte reformulé et amélioré', prompt: 'Reformule ce texte de manière plus claire, fluide et professionnelle, tout en gardant le sens original :\n\n' }
+    };
+
+    async function aiAction(type) {
+        const text = document.getElementById('resultText').textContent;
+        if (!text || text.trim() === '') return alert('Faites d\'abord une transcription !');
+
+        const config = aiPrompts[type];
+        document.getElementById('modalTitle').textContent = config.title;
+        document.getElementById('modalSub').textContent = config.sub;
+        document.getElementById('aiResult').textContent = '⏳ Traitement en cours...';
+        document.getElementById('aiModal').classList.add('active');
+
+        try {
+            const resp = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getToken()
+                },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: config.prompt + text }] }]
+                })
+            });
+
+            if (!resp.ok) throw new Error('Erreur serveur');
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error.message);
+            const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            document.getElementById('aiResult').textContent = result || 'Aucun résultat';
+        } catch (err) {
+            document.getElementById('aiResult').textContent = '❌ Erreur : ' + err.message;
+        }
+    }
+
+    function showTranslate() {
+        const text = document.getElementById('resultText').textContent;
+        if (!text || text.trim() === '') return alert('Faites d\'abord une transcription !');
+        document.getElementById('translateModal').classList.add('active');
+    }
+
+    async function doTranslate(langue) {
+        document.getElementById('translateModal').classList.remove('active');
+        const text = document.getElementById('resultText').textContent;
+
+        document.getElementById('modalTitle').textContent = '🌐 Traduction en ' + langue;
+        document.getElementById('modalSub').textContent = 'Traduction automatique par Gemini';
+        document.getElementById('aiResult').textContent = '⏳ Traduction en cours...';
+        document.getElementById('aiModal').classList.add('active');
+
+        try {
+            const resp = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getToken()
+                },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: 'Traduis ce texte en ' + langue + '. Retourne uniquement la traduction :\n\n' + text }] }]
+                })
+            });
+
+            if (!resp.ok) throw new Error('Erreur serveur');
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error.message);
+            const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            document.getElementById('aiResult').textContent = result || 'Aucun résultat';
+        } catch (err) {
+            document.getElementById('aiResult').textContent = '❌ Erreur : ' + err.message;
+        }
+    }
+
+    // ===== ACTIONS =====
+    function copyText() {
+        navigator.clipboard.writeText(document.getElementById('resultText').textContent)
+            .then(() => alert('✅ Copié !'));
+    }
+
+    function copyAiResult() {
+        navigator.clipboard.writeText(document.getElementById('aiResult').textContent)
+            .then(() => alert('✅ Copié !'));
+    }
+
+    function downloadDoc() {
+        const text = document.getElementById('resultText').textContent;
+        const date = new Date().toLocaleDateString('fr-FR');
+        const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>body{font-family:Georgia,serif;max-width:680px;margin:48px auto;padding:40px;color:#1a1a2e}.header{background:linear-gradient(135deg,#667eea,#764ba2);padding:32px;border-radius:16px;margin-bottom:32px;color:white}h1{font-size:22px;margin-bottom:6px}.date{opacity:0.8;font-size:13px}.content{font-size:16px;line-height:1.85;text-align:justify;padding:24px;background:#f8f9ff;border-radius:12px;border-left:4px solid #667eea}.footer{margin-top:32px;text-align:center;color:#aaa;font-size:12px}</style></head><body><div class="header"><h1>🎙️ VoiceScribe — Transcription</h1><div class="date">Date : ' + date + '</div></div><div class="content">' + text + '</div><div class="footer">Propulsé par Gemini AI • VoiceScribe</div></body></html>';
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'transcription_' + date.replace(/\//g,'-') + '.html';
+        a.click(); URL.revokeObjectURL(url);
+    }
+
+    function shareText() {
+        const text = document.getElementById('resultText').textContent;
+        if (navigator.share) {
+            navigator.share({ title: 'Transcription VoiceScribe', text: text });
+        } else {
+            navigator.clipboard.writeText(text).then(() => alert('✅ Texte copié pour partage !'));
+        }
+    }
+
+    function newTranscription() {
+        document.getElementById('resultCard').classList.remove('active');
+        secs = 0; updateTimer();
+    }
+
+    function closeModal(e) {
+        if (e.target.classList.contains('modal-overlay')) {
+            document.getElementById('aiModal').classList.remove('active');
+            document.getElementById('translateModal').classList.remove('active');
+        }
+    }
+
+    function closeModalBtn() { document.getElementById('aiModal').classList.remove('active'); }
+    function closeModalBtn2() { document.getElementById('translateModal').classList.remove('active'); }
+
+    // ===== SUPABASE =====
+    async function saveTranscription(text) {
+        const u = getUser();
+        if (!u) return;
+        try {
+            await fetch(SUPABASE_URL + '/rest/v1/transcriptions', {
+                method: 'POST',
+                headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ user_id: u.id, text, duration_seconds: secs })
+            });
+        } catch {}
+    }
+
+    async function loadHistory() {
+        const u = getUser();
+        if (!u) return;
+        try {
+            const r = await fetch(SUPABASE_URL + '/rest/v1/transcriptions?user_id=eq.' + u.id + '&order=created_at.desc&limit=8', {
+                headers: authHeaders()
+            });
+            if (!r.ok) return;
+            const items = await r.json();
+            const section = document.getElementById('historySection');
+            const list = document.getElementById('historyList');
+            if (!items || items.length === 0) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+            totalCount = items.length;
+            document.getElementById('statCount').textContent = totalCount;
+            list.innerHTML = items.map(item => '<div class="history-item" onclick="restoreItem(this)" data-text="' + encodeURIComponent(item.text) + '"><div class="history-dot"></div><div class="history-content"><div class="history-date">' + new Date(item.created_at).toLocaleString('fr-FR') + '</div><div class="history-preview">' + item.text + '</div></div></div>').join('');
+        } catch {}
+    }
+
+    function restoreItem(el) {
+        const text = decodeURIComponent(el.dataset.text);
+        currentText = text;
+        document.getElementById('resultText').textContent = text;
+        document.getElementById('wordCount').textContent = text.trim().split(/\s+/).length + ' mots';
+        document.getElementById('resultCard').classList.add('active');
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@ export default {
         const audioBytes = Uint8Array.from(atob(body.audio), c => c.charCodeAt(0));
         const audioBlob = new Blob([audioBytes], {type: body.mimeType || "audio/webm"});
         const formData = new FormData();
-        formData.append("file", audioBlob, "audio.webm");
+        formData.append("file", audioBlob, "audio.mp3");
         formData.append("model", "whisper-large-v3");
         formData.append("language", "fr");
         const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {method:"POST", headers:{"Authorization":"Bearer "+env.GROQ_API_KEY}, body:formData});

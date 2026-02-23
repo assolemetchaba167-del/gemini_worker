@@ -21,7 +21,10 @@ export default {
         return new Response(JSON.stringify({error: e.message}), {status:500, headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});
       }
     }
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key="+env.GEMINI_API_KEY, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-    return new Response(await res.text(), {headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});
+    if (body.type === "text") {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method:"POST", headers:{"Authorization":"Bearer "+env.GROQ_API_KEY, "Content-Type":"application/json"}, body:JSON.stringify({model:"llama3-8b-8192", messages:[{role:"system", content:"Tu es un assistant intelligent. Réponds en français."},{role:"user", content:body.prompt}], temperature:0.7})});
+      return new Response(await res.text(), {headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});
+    }
+    return new Response("Type non supporté", {status:400, headers:{"Access-Control-Allow-Origin":"*"}});
   }
 };
